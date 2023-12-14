@@ -37,7 +37,7 @@ describe('BitcoinClient', async () => {
   /**
    * Verifies the given expected input against the actual input to `rpcCall`, then mocks the return value.
    */
-  function verifyThenMockRpcCall (expectedMethod: string, expectedIsWalletRpc: boolean, expectedParams: any[] | undefined, returns: any): jasmine.Spy {
+  function verifyThenMockRpcCall(expectedMethod: string, expectedIsWalletRpc: boolean, expectedParams: any[] | undefined, returns: any): jasmine.Spy {
     return spyOn(bitcoinClient, 'rpcCall' as any).and.callFake((request: any, _enableTimeout: boolean, isWalletRpc: boolean) => {
 
       expect(isWalletRpc).toEqual(expectedIsWalletRpc);
@@ -48,7 +48,7 @@ describe('BitcoinClient', async () => {
     });
   }
 
-  function generateBitcoreTransactionWrapper (bitcoinWalletImportString: string, outputSatoshis: number = 1, confirmations: number = 0) {
+  function generateBitcoreTransactionWrapper(bitcoinWalletImportString: string, outputSatoshis: number = 1, confirmations: number = 0) {
     const transaction = BitcoinDataGenerator.generateBitcoinTransaction(bitcoinWalletImportString, outputSatoshis);
     const unspentOutput = BitcoinDataGenerator.generateUnspentCoin(bitcoinWalletImportString, outputSatoshis + 500);
     transaction.from([unspentOutput]);
@@ -124,7 +124,7 @@ describe('BitcoinClient', async () => {
   });
 
   describe('generatePrivateKey', () => {
-    function validateGeneratedPrivateKey (privateKey: string | undefined): void {
+    function validateGeneratedPrivateKey(privateKey: string | undefined): void {
       expect(privateKey).toBeDefined();
       expect(typeof privateKey).toEqual('string');
       expect(privateKey!.length).toBeGreaterThan(0);
@@ -412,7 +412,7 @@ describe('BitcoinClient', async () => {
       await bitcoinClient['loadWallet']();
       expect(rpcSpy).toHaveBeenCalledWith({
         method: 'loadwallet',
-        params: ['sidetreeDefaultWallet', true]
+        params: ['sidetreeDefaultWallet']
       }, true, false);
       expect(loggerSpy).toHaveBeenCalledWith(`Wallet loaded with name "sidetreeDefaultWallet".`);
     });
@@ -425,7 +425,7 @@ describe('BitcoinClient', async () => {
       } catch {
         expect(rpcSpy).toHaveBeenCalledWith({
           method: 'loadwallet',
-          params: ['sidetreeDefaultWallet', true]
+          params: ['sidetreeDefaultWallet']
         }, true, false);
       }
     });
@@ -436,7 +436,7 @@ describe('BitcoinClient', async () => {
       await bitcoinClient['loadWallet']();
       expect(rpcSpy).toHaveBeenCalledWith({
         method: 'loadwallet',
-        params: ['sidetreeDefaultWallet', true]
+        params: ['sidetreeDefaultWallet']
       }, true, false);
       expect(loggerSpy).toHaveBeenCalledWith(`Wallet with name sidetreeDefaultWallet already loaded.`);
     });
@@ -627,7 +627,7 @@ describe('BitcoinClient', async () => {
     });
 
     it('should throw if the feerate undefined', async (done) => {
-      const spy = verifyThenMockRpcCall('estimatesmartfee', expectedIsWalletRpc, [1], { });
+      const spy = verifyThenMockRpcCall('estimatesmartfee', expectedIsWalletRpc, [1], {});
 
       try {
         await bitcoinClient['getCurrentEstimatedFeeInSatoshisPerKB']();
@@ -1441,7 +1441,7 @@ describe('BitcoinClient', async () => {
         return Promise.resolve(Buffer.from('unused'));
       });
 
-      await bitcoinClient['fetchWithRetry']('http://unused_path', { }, true); // true = timeout enabled.
+      await bitcoinClient['fetchWithRetry']('http://unused_path', {}, true); // true = timeout enabled.
 
       expect(fetchSpy).toHaveBeenCalledTimes(2);
       expect(readAllSpy).toHaveBeenCalledTimes(2); // Shows retry has happened.
@@ -1455,8 +1455,8 @@ describe('BitcoinClient', async () => {
       const readAllSpy = spyOn(ReadableStream, 'readAll').and.returnValue(Promise.resolve(Buffer.from('unused')));
 
       await JasmineSidetreeErrorValidator.expectSidetreeErrorToBeThrownAsync(() =>
-        bitcoinClient['fetchWithRetry']('http://unused_path', { }, true), // true = timeout enabled.
-      ErrorCode.BitcoinClientFetchUnexpectedError
+        bitcoinClient['fetchWithRetry']('http://unused_path', {}, true), // true = timeout enabled.
+        ErrorCode.BitcoinClientFetchUnexpectedError
       );
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);

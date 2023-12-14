@@ -42,7 +42,7 @@ export default class BitcoinClient {
   /** The wallet name that is created, loaded and used */
   private walletNameToUse = 'sidetreeDefaultWallet';
 
-  constructor (
+  constructor(
     private bitcoinPeerUri: string,
     bitcoinRpcUsername: string | undefined,
     bitcoinRpcPassword: string | undefined,
@@ -68,7 +68,7 @@ export default class BitcoinClient {
   /**
    * Initialize this bitcoin client.
    */
-  public async initialize (): Promise<void> {
+  public async initialize(): Promise<void> {
     // Periodically poll Bitcoin Core status until it is ready.
     const bitcoinCoreStatusPollingWindowInSeconds = 60;
     await this.waitUntilBitcoinCoreIsReady(bitcoinCoreStatusPollingWindowInSeconds);
@@ -80,7 +80,7 @@ export default class BitcoinClient {
    * Periodically polls Bitcoin Core status until it is ready.
    * @param pollingWindowInSeconds Time to wait between each status check. Mainly used for speeding up unit tests.
    */
-  private async waitUntilBitcoinCoreIsReady (pollingWindowInSeconds: number): Promise<void> {
+  private async waitUntilBitcoinCoreIsReady(pollingWindowInSeconds: number): Promise<void> {
     while (true) {
       try {
         Logger.info('Getting blockchain info...');
@@ -114,7 +114,7 @@ export default class BitcoinClient {
    * NOTE: We only use the Bitcoin Core wallet for read/monitoring purposes. `this.bitcoinWallet` is the abstraction for writes/spends.
    * There is an opportunity here to disambiguate the two "wallets" by perhaps annotating the variables and interface with "WatchOnly/Spending".
    */
-  private async initializeBitcoinCore (): Promise<void> {
+  private async initializeBitcoinCore(): Promise<void> {
     // Create and load wallet have to be called because as of bitcoin v0.21, a default wallet is no longer automatically created and loaded
     // https://github.com/bitcoin/bitcoin/pull/15454
     await this.createWallet();
@@ -136,7 +136,7 @@ export default class BitcoinClient {
    * generates a private key in WIF format
    * @param network Which bitcoin network to generate this key for
    */
-  public static generatePrivateKey (network: 'mainnet' | 'livenet' | 'testnet' | undefined): string {
+  public static generatePrivateKey(network: 'mainnet' | 'livenet' | 'testnet' | undefined): string {
     let bitcoreNetwork: Networks.Network | undefined;
     switch (network) {
       case 'mainnet':
@@ -156,7 +156,7 @@ export default class BitcoinClient {
    * Converts the amount from BTC to satoshis.
    * @param amountInBtc The amount in BTC
    */
-  public static convertBtcToSatoshis (amountInBtc: number): number {
+  public static convertBtcToSatoshis(amountInBtc: number): number {
     return Unit.fromBTC(amountInBtc).toSatoshis();
   }
 
@@ -164,7 +164,7 @@ export default class BitcoinClient {
    * Broadcasts the specified data transaction.
    * @param bitcoinSidetreeTransaction The transaction object.
    */
-  public async broadcastSidetreeTransaction (bitcoinSidetreeTransaction: BitcoinSidetreeTransactionModel): Promise<string> {
+  public async broadcastSidetreeTransaction(bitcoinSidetreeTransaction: BitcoinSidetreeTransactionModel): Promise<string> {
 
     return this.broadcastTransactionRpc(bitcoinSidetreeTransaction.serializedTransactionObject);
   }
@@ -174,7 +174,7 @@ export default class BitcoinClient {
    *
    * @param bitcoinLockTransaction The transaction object.
    */
-  public async broadcastLockTransaction (bitcoinLockTransaction: BitcoinLockTransactionModel): Promise<string> {
+  public async broadcastLockTransaction(bitcoinLockTransaction: BitcoinLockTransactionModel): Promise<string> {
     const transactionHash = await this.broadcastTransactionRpc(bitcoinLockTransaction.serializedTransactionObject);
     Logger.info(`Broadcasted lock transaction: ${transactionHash}`);
 
@@ -187,7 +187,7 @@ export default class BitcoinClient {
    * @param transactionData The data to write in the transaction.
    * @param minimumFeeInSatoshis The minimum fee for the transaction in satoshis.
    */
-  public async createSidetreeTransaction (transactionData: string, minimumFeeInSatoshis: number): Promise<BitcoinSidetreeTransactionModel> {
+  public async createSidetreeTransaction(transactionData: string, minimumFeeInSatoshis: number): Promise<BitcoinSidetreeTransactionModel> {
     const transaction = await this.createTransaction(transactionData, minimumFeeInSatoshis);
 
     const signedTransaction = await this.bitcoinWallet.signTransaction(transaction);
@@ -209,7 +209,7 @@ export default class BitcoinClient {
    * @param lockAmountInSatoshis The amount to lock.
    * @param lockDurationInBlocks  The number of blocks to lock the amount for; the amount becomes spendable AFTER this many blocks.
    */
-  public async createLockTransaction (lockAmountInSatoshis: number, lockDurationInBlocks: number): Promise<BitcoinLockTransactionModel> {
+  public async createLockTransaction(lockAmountInSatoshis: number, lockDurationInBlocks: number): Promise<BitcoinLockTransactionModel> {
     const unspentCoins = await this.getUnspentOutputs(this.bitcoinWallet.getAddress());
 
     const [freezeTransaction, redeemScript] = await this.createFreezeTransaction(unspentCoins, lockDurationInBlocks, lockAmountInSatoshis);
@@ -232,7 +232,7 @@ export default class BitcoinClient {
    * @param existingLockDurationInBlocks The duration of the existing lock.
    * @param newLockDurationInBlocks The duration for the new lock.
    */
-  public async createRelockTransaction (
+  public async createRelockTransaction(
     existingLockTransactionId: string,
     existingLockDurationInBlocks: number,
     newLockDurationInBlocks: number): Promise<BitcoinLockTransactionModel> {
@@ -263,7 +263,7 @@ export default class BitcoinClient {
    * @param existingLockTransactionId The existing transaction with locked amount.
    * @param existingLockDurationInBlocks The lock duration for the existing lock.
    */
-  public async createReleaseLockTransaction (existingLockTransactionId: string, existingLockDurationInBlocks: number): Promise<BitcoinLockTransactionModel> {
+  public async createReleaseLockTransaction(existingLockTransactionId: string, existingLockDurationInBlocks: number): Promise<BitcoinLockTransactionModel> {
     const existingLockTransaction = await this.getRawTransactionRpc(existingLockTransactionId);
 
     const releaseLockTransaction = await this.createSpendToWalletTransaction(existingLockTransaction, existingLockDurationInBlocks);
@@ -282,7 +282,7 @@ export default class BitcoinClient {
     };
   }
 
-  private async createWallet () {
+  private async createWallet() {
     const request = {
       method: 'createwallet',
       params: [this.walletNameToUse] // the wallet name
@@ -305,10 +305,10 @@ export default class BitcoinClient {
     };
   }
 
-  private async loadWallet () {
+  private async loadWallet() {
     const request = {
       method: 'loadwallet',
-      params: [this.walletNameToUse, true] // the wallet name
+      params: [this.walletNameToUse] // the wallet name
     };
 
     // Intentionally not throwing because bitcoin returns 500 when a wallet is already loaded
@@ -320,7 +320,7 @@ export default class BitcoinClient {
     } catch (e) {
       // using error message because bitcoin core error code is not reliable as a single code can contain multiple errors
       const duplicateLoadString = 'already loaded';
-      if (e.toString().toLowerCase().includes(duplicateLoadString)) {
+      if (e.toString().toLowerCase().includes(duplicateLoadString) || e.toString().toLowerCase().includes('duplicate')) {
         Logger.info(`Wallet with name ${this.walletNameToUse} already loaded.`);
       } else {
         throw e;
@@ -333,7 +333,7 @@ export default class BitcoinClient {
    * @param hash The hash of the block
    * @returns the block data.
    */
-  public async getBlock (hash: string): Promise<BitcoinBlockModel> {
+  public async getBlock(hash: string): Promise<BitcoinBlockModel> {
     const request = {
       method: 'getblock',
       params: [
@@ -364,7 +364,7 @@ export default class BitcoinClient {
    * @param height The height to get a hash for
    * @returns the block hash
    */
-  public async getBlockHash (height: number): Promise<string> {
+  public async getBlockHash(height: number): Promise<string> {
     Logger.info(`Getting hash for block ${height}`);
     const hashRequest = {
       method: 'getblockhash',
@@ -382,7 +382,7 @@ export default class BitcoinClient {
    * @param height The height of the block
    * @returns the block info.
    */
-  public async getBlockInfoFromHeight (height: number): Promise<IBlockInfo> {
+  public async getBlockInfoFromHeight(height: number): Promise<IBlockInfo> {
     return this.getBlockInfo(await this.getBlockHash(height));
   }
 
@@ -391,7 +391,7 @@ export default class BitcoinClient {
    * @param hash The hash of the block
    * @returns the block info.
    */
-  public async getBlockInfo (hash: string): Promise<IBlockInfo> {
+  public async getBlockInfo(hash: string): Promise<IBlockInfo> {
     const request = {
       method: 'getblockheader',
       params: [
@@ -414,7 +414,7 @@ export default class BitcoinClient {
    * Gets the current Bitcoin block height
    * @returns the latest block number
    */
-  public async getCurrentBlockHeight (): Promise<number> {
+  public async getCurrentBlockHeight(): Promise<number> {
     Logger.info('Getting current block height...');
     const request = {
       method: 'getblockcount'
@@ -429,7 +429,7 @@ export default class BitcoinClient {
    * Gets all unspent coins of the wallet which is being watched.
    * @returns the balance of the wallet
    */
-  public async getBalanceInSatoshis (): Promise<number> {
+  public async getBalanceInSatoshis(): Promise<number> {
 
     const unspentOutputs = await this.getUnspentOutputs(this.bitcoinWallet.getAddress());
 
@@ -445,7 +445,7 @@ export default class BitcoinClient {
    * @param transactionId the id of the target transaction.
    * @returns the transaction fee in satoshis.
    */
-  public async getTransactionFeeInSatoshis (transactionId: string): Promise<number> {
+  public async getTransactionFeeInSatoshis(transactionId: string): Promise<number> {
 
     const transaction = await this.getRawTransaction(transactionId);
 
@@ -466,7 +466,7 @@ export default class BitcoinClient {
     return (inputSatoshiSum - outputSatoshiSum);
   }
 
-  private async addWatchOnlyAddressToWallet (publicKeyAsHex: string, rescan: boolean): Promise<void> {
+  private async addWatchOnlyAddressToWallet(publicKeyAsHex: string, rescan: boolean): Promise<void> {
     const request = {
       method: 'importpubkey',
       params: [
@@ -480,7 +480,7 @@ export default class BitcoinClient {
     await this.rpcCall(request, false, isWalletRpc);
   }
 
-  private async broadcastTransactionRpc (rawTransaction: string) {
+  private async broadcastTransactionRpc(rawTransaction: string) {
 
     const request = {
       method: 'sendrawtransaction',
@@ -493,7 +493,7 @@ export default class BitcoinClient {
     return this.rpcCall(request, true, isWalletRpc);
   }
 
-  private async isAddressAddedToWallet (address: string): Promise<boolean> {
+  private async isAddressAddedToWallet(address: string): Promise<boolean> {
     Logger.info(`Checking if bitcoin wallet for ${address} exists`);
     const request = {
       method: 'getaddressinfo',
@@ -507,7 +507,7 @@ export default class BitcoinClient {
     return response.labels.length > 0 || response.iswatchonly;
   }
 
-  private async getCurrentEstimatedFeeInSatoshisPerKB (): Promise<number> {
+  private async getCurrentEstimatedFeeInSatoshisPerKB(): Promise<number> {
     const request = {
       method: 'estimatesmartfee',
       params: [
@@ -519,7 +519,7 @@ export default class BitcoinClient {
     const response = await this.rpcCall(request, true, isWalletRpc);
 
     if (!response.feerate ||
-        (response.errors && response.errors.length > 0)) {
+      (response.errors && response.errors.length > 0)) {
       const error = response.errors ? JSON.stringify(response.errors) : `Feerate is undefined`;
       throw new Error(`Fee rate could not be estimated. Error: ${error}`);
     }
@@ -530,7 +530,7 @@ export default class BitcoinClient {
   }
 
   /** Get the current estimated fee from RPC and update stored estimate */
-  private async updateEstimatedFeeInSatoshisPerKB (): Promise<number> {
+  private async updateEstimatedFeeInSatoshisPerKB(): Promise<number> {
     let estimatedFeeSatoshiPerKB;
     try {
       estimatedFeeSatoshiPerKB = await this.getCurrentEstimatedFeeInSatoshisPerKB();
@@ -545,7 +545,7 @@ export default class BitcoinClient {
   }
 
   /** Get the transaction out value in satoshi, for a specified output index */
-  private async getTransactionOutValueInSatoshi (transactionId: string, outputIndex: number) {
+  private async getTransactionOutValueInSatoshi(transactionId: string, outputIndex: number) {
     const transaction = await this.getRawTransaction(transactionId);
 
     // output with the desired index
@@ -558,7 +558,7 @@ export default class BitcoinClient {
    * Get the raw transaction data.
    * @param transactionId The target transaction id.
    */
-  public async getRawTransaction (transactionId: string): Promise<BitcoinTransactionModel> {
+  public async getRawTransaction(transactionId: string): Promise<BitcoinTransactionModel> {
     const bitcoreTransaction = await this.getRawTransactionRpc(transactionId);
 
     return BitcoinClient.createBitcoinTransactionModel(bitcoreTransaction);
@@ -568,7 +568,7 @@ export default class BitcoinClient {
    * Convert a block to bitcoin transaction models
    * @param block The block to convert
    */
-  public static convertToBitcoinTransactionModels (block: Block): BitcoinTransactionModel[] {
+  public static convertToBitcoinTransactionModels(block: Block): BitcoinTransactionModel[] {
     const transactionModels = block.transactions.map((transaction: any) => {
       const bitcoreTransaction = {
         id: transaction.id,
@@ -583,7 +583,7 @@ export default class BitcoinClient {
     return transactionModels;
   }
 
-  private async getRawTransactionRpc (transactionId: string): Promise<BitcoreTransactionWrapper> {
+  private async getRawTransactionRpc(transactionId: string): Promise<BitcoreTransactionWrapper> {
     const request = {
       method: 'getrawtransaction',
       params: [
@@ -606,11 +606,11 @@ export default class BitcoinClient {
   }
 
   // This function is specifically created to help with unit testing.
-  private static createTransactionFromBuffer (buffer: Buffer): Transaction {
+  private static createTransactionFromBuffer(buffer: Buffer): Transaction {
     return new Transaction(buffer);
   }
 
-  private static createBitcoreTransactionWrapper (buffer: Buffer, confirmations: number, blockHash: string): BitcoreTransactionWrapper {
+  private static createBitcoreTransactionWrapper(buffer: Buffer, confirmations: number, blockHash: string): BitcoreTransactionWrapper {
 
     const transaction = BitcoinClient.createTransactionFromBuffer(buffer);
 
@@ -623,7 +623,7 @@ export default class BitcoinClient {
     };
   }
 
-  private async createTransaction (transactionData: string, minFeeInSatoshis: number): Promise<Transaction> {
+  private async createTransaction(transactionData: string, minFeeInSatoshis: number): Promise<Transaction> {
     const walletAddress = this.bitcoinWallet.getAddress();
     const unspentOutputs = await this.getUnspentOutputs(walletAddress);
 
@@ -655,7 +655,7 @@ export default class BitcoinClient {
    * @param transaction The transaction for which the fee is to be calculated.
    * @returns the transaction fee in satoshis.
    */
-  private async calculateTransactionFee (transaction: Transaction): Promise<number> {
+  private async calculateTransactionFee(transaction: Transaction): Promise<number> {
     // Get estimated fee from RPC
     const estimatedFeePerKB = await this.updateEstimatedFeeInSatoshisPerKB();
 
@@ -672,7 +672,7 @@ export default class BitcoinClient {
     return Math.ceil(estimatedFeeWithPercentage);
   }
 
-  private async createFreezeTransaction (
+  private async createFreezeTransaction(
     unspentCoins: Transaction.UnspentOutput[],
     freezeDurationInBlocks: number,
     freezeAmountInSatoshis: number): Promise<[Transaction, Script]> {
@@ -699,7 +699,7 @@ export default class BitcoinClient {
     return [freezeTransaction, freezeScript];
   }
 
-  private async createSpendToFreezeTransaction (
+  private async createSpendToFreezeTransaction(
     previousFreezeTransaction: BitcoreTransactionWrapper,
     previousFreezeDurationInBlocks: number,
     newFreezeDurationInBlocks: number): Promise<[Transaction, Script]> {
@@ -724,7 +724,7 @@ export default class BitcoinClient {
     return [reFreezeTransaction, freezeScript];
   }
 
-  private async createSpendToWalletTransaction (
+  private async createSpendToWalletTransaction(
     previousFreezeTransaction: BitcoreTransactionWrapper,
     previousFreezeDurationInBlocks: number): Promise<Transaction> {
 
@@ -746,7 +746,7 @@ export default class BitcoinClient {
    * @param previousFreezeDurationInBlocks The previously frozen transaction's freeze time in blocks.
    * @param paytoAddress The address where the spend transaction should go to.
    */
-  private async createSpendTransactionFromFrozenTransaction (
+  private async createSpendTransactionFromFrozenTransaction(
     previousFreezeTransaction: BitcoreTransactionWrapper,
     previousFreezeDurationInBlocks: number,
     paytoAddress: Address): Promise<Transaction> {
@@ -783,7 +783,7 @@ export default class BitcoinClient {
     return spendTransaction;
   }
 
-  private createUnspentOutputFromFrozenTransaction (
+  private createUnspentOutputFromFrozenTransaction(
     previousFreezeTransaction: BitcoreTransactionWrapper,
     previousfreezeDurationInBlocks: number): Transaction.UnspentOutput {
 
@@ -803,7 +803,7 @@ export default class BitcoinClient {
     return frozenOutputAsUnspentOutput;
   }
 
-  private static createFreezeScript (freezeDurationInBlocks: number, walletAddress: Address): Script {
+  private static createFreezeScript(freezeDurationInBlocks: number, walletAddress: Address): Script {
     const lockBuffer = (crypto.BN as any).fromNumber(freezeDurationInBlocks).toScriptNumBuffer();
     const publicKeyHashOut = Script.buildPublicKeyHashOut(walletAddress);
 
@@ -816,14 +816,14 @@ export default class BitcoinClient {
     return redeemScript;
   }
 
-  private static serializeSignedTransaction (signedTransaction: Transaction): string {
+  private static serializeSignedTransaction(signedTransaction: Transaction): string {
     // The signed transaction is returned by the IBitcoinWallet implementation and could be created via serialized hex
     // input. In that case, the bitcore-lib Transaction does not distinguish the inputs and serialization fails with an
     // "unsigned-inputs" failure. So for serialization, we will pass in special options to disable those checks.
     return (signedTransaction as any).serialize({ disableAll: true });
   }
 
-  private static createBitcoinInputModel (bitcoreInput: Transaction.Input): BitcoinInputModel {
+  private static createBitcoinInputModel(bitcoreInput: Transaction.Input): BitcoinInputModel {
     return {
       previousTransactionId: bitcoreInput.prevTxId.toString('hex'),
       outputIndexInPreviousTransaction: bitcoreInput.outputIndex,
@@ -831,7 +831,7 @@ export default class BitcoinClient {
     };
   }
 
-  private static createBitcoinOutputModel (bitcoreOutput: Transaction.Output): BitcoinOutputModel {
+  private static createBitcoinOutputModel(bitcoreOutput: Transaction.Output): BitcoinOutputModel {
     return {
       satoshis: bitcoreOutput.satoshis,
       // Some transaction outputs do not have a script, such as coinbase transactions.
@@ -843,7 +843,7 @@ export default class BitcoinClient {
    * create internal bitcoin transaction model from bitcore transaction model
    * @param transactionWrapper the bitcore transaction model wrapper
    */
-  private static createBitcoinTransactionModel (transactionWrapper: BitcoreTransactionWrapper): BitcoinTransactionModel {
+  private static createBitcoinTransactionModel(transactionWrapper: BitcoreTransactionWrapper): BitcoinTransactionModel {
 
     const bitcoinInputs = transactionWrapper.inputs.map((input) => { return BitcoinClient.createBitcoinInputModel(input); });
     const bitcoinOutputs = transactionWrapper.outputs.map((output) => { return BitcoinClient.createBitcoinOutputModel(output); });
@@ -857,7 +857,7 @@ export default class BitcoinClient {
     };
   }
 
-  private async getUnspentOutputs (address: Address): Promise<Transaction.UnspentOutput[]> {
+  private async getUnspentOutputs(address: Address): Promise<Transaction.UnspentOutput[]> {
 
     const addressToSearch = address.toString();
     Logger.info(`Getting unspent coins for ${addressToSearch}`);
@@ -892,7 +892,7 @@ export default class BitcoinClient {
    * @param timeout Should timeout or not
    * @param isWalletRpc Must set to `true` if the RPC is wallet-specific; `false` otherwise.
    */
-  private async rpcCall (request: any, timeout: boolean, isWalletRpc: boolean): Promise<any> {
+  private async rpcCall(request: any, timeout: boolean, isWalletRpc: boolean): Promise<any> {
     // Append some standard RPC parameters.
     request.jsonrpc = '1.0';
     request.id = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(32);
@@ -936,7 +936,7 @@ export default class BitcoinClient {
    *                      Set to `false` to wait indefinitely for response (used for long running request such as importing a wallet).
    * @returns Buffer of the response body.
    */
-  private async fetchWithRetry (uri: string, requestParameters: RequestInit, enableTimeout: boolean): Promise<Buffer> {
+  private async fetchWithRetry(uri: string, requestParameters: RequestInit, enableTimeout: boolean): Promise<Buffer> {
     let retryCount = 0;
     let networkError: Error | undefined;
     let requestTimeout = enableTimeout ? this.requestTimeout : 0; // 0 = disabling timeout.
@@ -980,8 +980,8 @@ export default class BitcoinClient {
 
         // Retry-able if one of these HTTP codes.
         if (response.status === httpStatus.BAD_GATEWAY ||
-            response.status === httpStatus.GATEWAY_TIMEOUT ||
-            response.status === httpStatus.SERVICE_UNAVAILABLE) {
+          response.status === httpStatus.GATEWAY_TIMEOUT ||
+          response.status === httpStatus.SERVICE_UNAVAILABLE) {
           Logger.info(`Attempt ${retryCount} resulted in ${response.status}`);
           continue;
         }
